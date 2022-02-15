@@ -17,8 +17,10 @@ class Replacements:
             elif replacement == '#counter':
                 result.append("{:04d}".format(counter))
             elif replacement[:5] == '#date':
-                format = replacement[6:-1] if replacement[5:6] == '#' else '%Y-%m-%dT%H%M'
+                format = replacement[6:-1] if replacement[5:6] == '[' else '%Y-%m-%dT%H%M'
                 result.append(str(parser.parse(metadata.header['DATE-OBS']).strftime(format)))
+            elif replacement == '#copy':
+                result.append(replacement)
 
         return result
 
@@ -56,13 +58,29 @@ class Renamer:
                 self.variable_pos.append(pos)
             pos += 1
 
+    def check_file_match(self, file):
+        p = 0
+        for elem in self.pattern_fields:
+            if elem == '@':
+                p += 1
+                continue
+            else:
+                if elem != file[p]:
+                    return False
+            p += 1
+
+        return True
+
     def process_file(self, file, metadata, counter):
         splitted = os.path.splitext(file)
         file_split = splitted[0].split("_")
+        if not self.check_file_match(file_split):
+            return
         r = 0
         replacements = self.replacements.get(metadata, counter)
         for elem in self.variable_pos:
-            file_split[elem] = replacements[r]
+            if replacements[r] != '#copy':
+                file_split[elem] = replacements[r]
             r += 1
 
         file_split = [s for s in file_split if s != ""]
