@@ -1,0 +1,1 @@
+# asiair-image-names-cleaner
